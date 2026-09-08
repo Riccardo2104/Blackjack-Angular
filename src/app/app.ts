@@ -84,7 +84,6 @@ export class App implements OnInit {
     let assi = 0;
 
     for (const carta of this.carte) {
-      // carta.value è tipizzato: se scrivi carta.valore, TypeScript ti avvisa
       if (carta.value === 'JACK' || carta.value === 'QUEEN' || carta.value === 'KING') {
         totale += 10;
       } else if (carta.value === 'ACE') {
