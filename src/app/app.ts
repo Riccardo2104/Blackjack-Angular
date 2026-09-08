@@ -1,65 +1,105 @@
-import {Component, OnInit} from '@angular/core';
-import {CommonModule} from "@angular/common";
-import {HttpClient} from "@angular/common/http";
-// https://deckofcardsapi.com/
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 
-/*
-* parametri api:
+// tipi delle risposte api
+type Carta = {
+  code: string;
+  image: string;
+  value: string;
+  suit: string;
+};
 
-deckid id del deck
-deckcount quanti deck rimaSTI
-https://deckofcardsapi.com/api/deck/<<new>>/draw/?count=2
+type RispostaShuffle = {
+  success: boolean;
+  deck_id: string;
+  remaining: number;
+  shuffled: boolean;
+};
 
-remaining=true per lo shuffle
+type RispostaPesca = {
+  success: boolean;
+  deck_id: string;
+  remaining: number;
+  cards: Carta[];
+};
 
-jokers_enabled=false per non far capitare
 
-
-spades picche, dimands quadri cubs sono fiori
-*
-* */
 @Component({
   selector: 'app-root',
+  standalone: true,
   imports: [CommonModule],
-  template: ` <div>
-    <h1>Blackjack Minificato</h1>
+  template: `
+    <h1>Blackjack</h1>
 
-    <!-- Sezione Punteggie -->
-    <div >
-      <p>Punteggio: <strong>{{ punteggio }}</strong></p>
-    </div>
+    <p>Punteggio: <strong>{{ punteggio }}</strong></p>
 
-    <!-- Area di visualizzazione delle Carte pescate -->
-    <div >
-      <div *ngFor="let carta of carte" >
-      </div>
-    </div>
-
-    
-
-    <!-- Bottoni di Controllo -->
     <div>
-      <button (click)="chiamaCarta()" > Chiama carta</button>
-      <button (click)="nuovoRound()"> Nuovo Round</button>
+      <img *ngFor="let carta of carte" [src]="carta.image" [alt]="carta.code" width="80" />
     </div>
-  </div> `,
-  styleUrls: ['./app.css'],
+
+    <div>
+      <button (click)="pescaCarta()">Chiama carta</button>
+      <button (click)="rimischiaMazzo()">Rimischia mazzo</button>
+    </div>
+  `,
 })
 export class App implements OnInit {
-title = 'Pagina Home'
-  deckId: string = '';
-  carte: any[] = [];
-  punteggio: number = 0;
+
+
+
+  idMazzo = '';
+  punteggio = 0;
+
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
-        throw new Error("Method not implemented.");
-    }
-  chiamaCarta() {
-// prima devo mischiare e poi pescare
-
+    this.rimischiaMazzo();
   }
-  nuovoRound(){
-    // da vedere col prof
+  carte: Carta[] = [];
+
+  rimischiaMazzo(): void {
+    this.http
+        .get<RispostaShuffle>('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1')
+        .subscribe({
+          next: (risposta) => {
+            this.idMazzo = risposta.deck_id; // l'IDE ora suggerisce deck_id, remaining, ecc.
+          },
+        });
+  }
+
+  pescaCarta(): void {
+    this.http
+        .get<RispostaPesca>(`https://deckofcardsapi.com/api/deck/${this.idMazzo}/draw/?count=1`)
+        .subscribe({
+          next: (risposta) => {
+            this.carte.push(risposta.cards[0]);
+            this.punteggio = this.calcolaPunteggio();
+          },
+        });
+  }
+
+  calcolaPunteggio(): number {
+    let totale = 0;
+    let assi = 0;
+
+    for (const carta of this.carte) {
+      // carta.value è tipizzato: se scrivi carta.valore, TypeScript ti avvisa
+      if (carta.value === 'JACK' || carta.value === 'QUEEN' || carta.value === 'KING') {
+        totale += 10;
+      } else if (carta.value === 'ACE') {
+        assi++;
+        totale += 11;
+      } else {
+        totale += parseInt(carta.value, 10);
+      }
+    }
+
+    while (totale > 21 && assi > 0) {
+      totale -= 10;
+      assi--;
+    }
+
+    return totale;
   }
 }
