@@ -4,14 +4,14 @@ import { provideRouter } from '@angular/router';
 import { App } from './app/app';
 import { Home } from './app/Pagine/home';
 import { Carte } from './app/Pagine/carte';
-import { Login } from './app/Pagine/login';
+import { Contattaci } from './app/Pagine/contattaci';
 
 bootstrapApplication(App, {
     providers: [
         provideRouter([
             { path: '', component: Home },
             { path: 'carte', component: Carte },
-            { path: 'login', component: Login },
+            { path: 'contattaci', component: Contattaci },
         ]),
     ],
 });
