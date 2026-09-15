@@ -5,7 +5,7 @@ export interface Carta {
     suit: string;
 }
 
-export interface RispostaShuffle {
+export interface RispostaRimischio {
     success: boolean;
     deck_id: string;
     remaining: number;

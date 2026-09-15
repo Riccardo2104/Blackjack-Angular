@@ -1,10 +1,9 @@
-import 'zone.js';
-import { Component, inject, OnInit, OnDestroy, } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule, HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 
-import { Carta, RispostaShuffle, RispostaPesca } from '../interfacce/risposteapicarte';
+import { Carta, RispostaRimischio, RispostaPesca } from '../interfacce/risposteapicarte';
 
 @Component({
     selector: 'app-carte',
@@ -13,7 +12,6 @@ import { Carta, RispostaShuffle, RispostaPesca } from '../interfacce/risposteapi
     styles: [`
       .bott {
         background-color: red;
-        
       }
       #bt1 {
         margin-left: 1em;
@@ -21,33 +19,28 @@ import { Carta, RispostaShuffle, RispostaPesca } from '../interfacce/risposteapi
       .div1 {
         margin-top: 1em;
       }
-      
     `],
     template: `
     <h2>Blackjack</h2>
 
-    <p>Punteggio: <strong>{{ punteggio }}</strong></p>
+    <p>Punteggio: <strong>{{ punteggio() }}</strong></p>
 
     <div>
-      <img *ngFor="let carta of carte" [src]="carta.image"  width="150" />
+      <img *ngFor="let carta of carte()" [src]="carta.image" width="150" />
     </div>
 
     <div class="div1">
       <button class="bott" (click)="pescaCarta()">Chiama carta</button>
       <button id="bt1" (click)="rimischiaMazzo()">Rimischia mazzo</button>
     </div>
-    
   `,
-
 })
 export class Carte implements OnInit, OnDestroy {
     http = inject(HttpClient);
 
-// come uso il servizio
-
-    idMazzo = '';
-    carte: Carta[] = [];
-    punteggio = 0;
+    idMazzo = signal('');
+    carte = signal<Carta[]>([]);
+    punteggio = signal(0);
 
     shuffleSubscription?: Subscription;
     pescaSubscription?: Subscription;
@@ -56,59 +49,57 @@ export class Carte implements OnInit, OnDestroy {
         this.rimischiaMazzo();
     }
 
-
-    // quando ho un componente se mentre sto ricevendo la richiesto devo disiscrivermi dal flusso dati
     ngOnDestroy() {
         this.shuffleSubscription?.unsubscribe();
         this.pescaSubscription?.unsubscribe();
     }
 
     rimischiaMazzo() {
-        this.carte = [];
-        this.punteggio = 0;
-        // qui dentro invece del tipo gli dovrei mettere un observable?
-        this.shuffleSubscription = this.http
-            .get<RispostaShuffle>('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1')
-            .subscribe({
-                next: (risposta: RispostaShuffle) => {
-                    this.idMazzo = risposta.deck_id;
-                    // sparo nel signal il valore oppure uso una pipe async
+        this.carte.set([]);
+        this.punteggio.set(0);
 
+        this.shuffleSubscription = this.http
+            .get<RispostaRimischio>('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1')
+            .subscribe({
+                next: (risposta: RispostaRimischio) => {
+                    this.idMazzo.set(risposta.deck_id);
                 },
+                error: (errore) => console.log('Errore nel mischiare:', errore),
             });
     }
 
-    pescaCarta() {
-        console.log(' pescaCarta, idMazzo:', this.idMazzo);
-
-        if (!this.idMazzo) {
-            console.log(' esco, mazzo non pronto');
-            return;
+    pescaCarta(): boolean {
+        if (!this.idMazzo()) {
+            return false;
         }
 
         this.pescaSubscription = this.http
-            .get<RispostaPesca>(`https://deckofcardsapi.com/api/deck/${this.idMazzo}/draw/?count=1`)
+            .get<RispostaPesca>(`https://deckofcardsapi.com/api/deck/${this.idMazzo()}/draw/?count=1`)
             .subscribe({
                 next: (risposta: RispostaPesca) => {
-                    console.log('risposta:', risposta);
-                    this.carte.push(risposta.cards[0]);
-                    this.punteggio = this.calcolaPunteggio();
-                    console.log('carte in mano:', this.carte.length, 'punteggio:', this.punteggio);
-                    if (this.punteggio > 21) {
+                    const nuoveCarte = this.carte();
+                    nuoveCarte.push(risposta.cards[0]);
+                    this.carte.set([...nuoveCarte]);
+
+                    this.punteggio.set(this.calcolaPunteggio());
+
+                    if (this.punteggio() > 21) {
                         setTimeout(() => {
                             alert('Hai sballato, reimpostazione della mano');
                             this.rimischiaMazzo();
                         }, 100);
                     }
                 },
-                error: (errore) => console.error('ERRORE:', errore),
+                error: (errore) => console.log('Errore nella pesca:', errore),
             });
+        return true;
     }
+
     calcolaPunteggio(): number {
         let totale = 0;
         let assi = 0;
 
-        for (const carta of this.carte) {
+        for (const carta of this.carte()) {
             if (carta.value === 'JACK' || carta.value === 'QUEEN' || carta.value === 'KING') {
                 totale += 10;
             } else if (carta.value === 'ACE') {
@@ -126,14 +117,4 @@ export class Carte implements OnInit, OnDestroy {
 
         return totale;
     }
-
-
-    /*
-    *
-    * metodo in cui esce un alter se superiamo il 21 e viene resettata la mano
-    *
-    * */
-
-
-
 }
