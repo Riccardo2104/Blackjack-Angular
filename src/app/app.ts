@@ -10,7 +10,7 @@ import { RouterModule } from '@angular/router';
     <nav>
       <ul>
         <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">Home</a></li>
-        <li><a routerLink="/carte" routerLinkActive="active">Carte</a></li>
+        <li><a routerLink="/blackjack" routerLinkActive="active">Blackjack</a></li>
         <li><a routerLink="/contattaci" routerLinkActive="active">Contattaci</a></li>
       </ul>
     </nav>
