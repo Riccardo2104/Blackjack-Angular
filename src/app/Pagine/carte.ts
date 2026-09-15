@@ -1,5 +1,5 @@
 import 'zone.js';
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule, HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
@@ -42,6 +42,7 @@ import { Carta, RispostaShuffle, RispostaPesca } from '../interfacce/risposteapi
 })
 export class Carte implements OnInit, OnDestroy {
     http = inject(HttpClient);
+
 // come uso il servizio
 
     idMazzo = '';
@@ -72,6 +73,7 @@ export class Carte implements OnInit, OnDestroy {
                 next: (risposta: RispostaShuffle) => {
                     this.idMazzo = risposta.deck_id;
                     // sparo nel signal il valore oppure uso una pipe async
+
                 },
             });
     }
@@ -93,8 +95,10 @@ export class Carte implements OnInit, OnDestroy {
                     this.punteggio = this.calcolaPunteggio();
                     console.log('carte in mano:', this.carte.length, 'punteggio:', this.punteggio);
                     if (this.punteggio > 21) {
-                        alert("Hai sballato, reimpostazione della mano");
-                        this.rimischiaMazzo();
+                        setTimeout(() => {
+                            alert('Hai sballato, reimpostazione della mano');
+                            this.rimischiaMazzo();
+                        }, 100);
                     }
                 },
                 error: (errore) => console.error('ERRORE:', errore),
