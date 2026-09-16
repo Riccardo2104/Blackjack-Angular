@@ -14,17 +14,17 @@ import {FormsModule} from '@angular/forms';
         <form #f="ngForm" (ngSubmit)="onSubmit()">
 
             <p>Nome</p>
-            <input name="nome" [(ngModel)]="nome" placeHolder="nome" ngModel required/>
+            <input name="nome" [(ngModel)]="nome" placeHolder="nome"  required/>
 
             <p>Cognome</p>
-            <input name="cognome" [(ngModel)]="cognome" placeHolder="cognome" ngModel required/>
+            <input name="cognome" [(ngModel)]="cognome" placeHolder="cognome"  required/>
 
             <p>email</p>
-            <input name="email" [(ngModel)]="email" placeHolder="email" ngModel required/>
+            <input name="email" [(ngModel)]="email" placeHolder="email"  required/>
 
             <p>Messaggio</p>
 
-            <textarea name="messaggio" [(ngModel)]="messaggio" ngModel required></textarea>
+            <textarea name="messaggio" [(ngModel)]="messaggio"  required></textarea>
 
 
             <button type="submit"  name="submit" [disabled]="f.status !== 'VALID'">Invia</button>
